@@ -38,6 +38,7 @@ router.get('/editproduct',userController.editProductForm);
 router.post('/editproduct',upload.single('product_image'),userController.editProduct);
 router.get('/deleteproduct',userController.deleteProduct);
 
+router.get('*',userController.error);
 
 
 

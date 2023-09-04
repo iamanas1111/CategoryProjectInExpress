@@ -32,18 +32,18 @@ app.use(session({
 app.use('/', routes);
 
 // Catch 404 and forward to error handler
-// app.use((req, res, next) => {
-//     next(createError(404));
-// });
+app.use((req, res, next) => {
+    next(createError(404));
+});
 
-// // Error handler
-// app.use((err, req, res, next) => {
-//     res.status(err.status || 500);
-//     res.render('error', {
-//         message: err.message,
-//         error: req.app.get('env') === 'development' ? err : {}
-//     });
-// });
+// Error handler
+app.use((err, req, res, next) => {
+    res.status(err.status || 500);
+    res.render('error', {
+        message: err.message,
+        error: req.app.get('env') === 'development' ? err : {}
+    });
+});
 
 // Start the server
 const port = process.env.PORT || 4000;
