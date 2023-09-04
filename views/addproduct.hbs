@@ -1,0 +1,99 @@
+<html>
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Category CRUD</title>
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<header>
+    <div id="wrapper">
+        <div id="header" style="background-color: tomato">
+            <h1>Products</h1>
+        </div>
+        <div id="menu">
+            <ul>
+                <li>
+                    <a href="productindex">Products List</a>
+                </li>
+                <li>
+                    <a href="addproduct">Add Products</a>
+                </li>
+                <li>
+                    <a href="/categoryindex">Catagories</a>
+                </li>
+                <li>
+                    <a href='logout'>Logout</a>
+                </li>
+                <!-- <li>
+                    <a href="update.php">Update</a>
+                </li>
+                <li>
+                    <a href="delete.php">Delete</a>
+                </li> -->
+            </ul>
+        </div>
+
+
+
+<body>
+<div id="main-content">
+    <h2>Add New Product</h2>
+    <h3 style="text-align:center; color: red;">
+        {{error_message}}
+    </h3>
+    <form class="post-form" action="" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" name="produnct_name" required />
+        </div>
+        <div class="form-group">
+            <label>Product Price</label>
+            <input type="text" name="price" pattern="^(?!0)[0-9]{1,7}$" title="Range 1-100000 allowed only" required />
+        </div>
+        <div class="form-group">
+            <label>Product Quantity</label>
+            <input type="text" name="quantity" pattern="^(?:[1-9]|[1-4][0-9]|50)$" title="Range 1-50 allowed only" required />
+        </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select name="category" required>
+                <option value="" selected disabled>Select Class</option>
+                {{#each categories}}
+                    <option value="{{cname}}">{{cname}}</option>
+                {{/each}}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Product Image</label>
+            <input type="file" name="product_image" id="image" accept=".jpg, .jpeg, .png, .webp"
+                onchange="showImagePreview(event)"><br><br>
+            <img id="imagePreview" src="#" alt="Selected Image" style="max-width: 200px; display: none;" />
+        </div>
+
+        <input class="submit" type="submit" value="Save" />
+    </form>
+</div>
+</body>
+</html>
+
+<script>
+    function showImagePreview(event) {
+        var input = event.target;
+        var imgPreview = document.getElementById('imagePreview');
+
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                imgPreview.src = e.target.result;
+                imgPreview.style.display = 'block';
+            };
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>

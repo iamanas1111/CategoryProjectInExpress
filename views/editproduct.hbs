@@ -1,0 +1,120 @@
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Category CRUD</title>
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<header>
+    <div id="wrapper">
+        <div id="header" style="background-color: tomato">
+            <h1>Products</h1>
+        </div>
+        <div id="menu">
+            <ul>
+                <li>
+                    <a href="productindex">Products List</a>
+                </li>
+                <li>
+                    <a href="addproduct">Add Products</a>
+                </li>
+                <li>
+                    <a href="/">Catagories</a>
+                </li>
+                <li>
+                    <a href='logout'>Logout</a>
+                </li>
+                <!-- <li>
+                    <a href="update.php">Update</a>
+                </li>
+                <li>
+                    <a href="delete.php">Delete</a>
+                </li> -->
+            </ul>
+        </div>
+
+
+
+        <body>
+            <div id="main-content">
+                <h2>Update Product</h2>
+                <h3 style="text-align:center; color: red;">
+                    {{error_message}}
+                </h3>
+
+                <form class="post-form" action="" method="post" enctype="multipart/form-data">
+                    {{#if productData}}
+                    {{#each productData}}
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="hidden" name="prod_id" value="{{prod_id}}" />
+                        <input type="text" name="produnct_name" value="{{produnct_name}}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="text" name="price" pattern="^(?!0)[0-9]{1,7}$" required value="{{price}}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="text" name="quantity" pattern="^(?:[1-9]|[1-4][0-9]|50)$" required
+                            value="{{quantity}}" />
+                    </div>
+                    {{/each}}
+                    {{/if}}
+                    <div class="form-group">
+                        <label>Parent Category</label>
+                        <select name="pname" required>
+                            {{#each parentCategories}}
+                            <option value="{{cname}}" {{#if selected}}selected{{/if}}>{{cname}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    {{#if productData}}
+                    {{#each productData}}
+                    <div class="form-group">
+                        <label>Product Image</label>
+                        <input type="file" name="product_image" id="product_image" accept=".jpg, .jpeg, .png , .webp"
+                            onchange="handleFileChange(this)"><br>
+                        <div id="image-details">
+                            {{#if product_image}}
+                            <p>Previous Image: {{product_image}}</p>
+                            <img src="images/{{product_image}}" width="40px" height="40px" title="{{product_image}}">
+                            {{/if}}
+                        </div>
+                    </div>
+                    
+
+                    <script>
+                        console.log('{{categories}}' + "Category")
+                        function handleFileChange(input) {
+                            const imageDetails = document.getElementById("image-details");
+                            if (input.files.length > 0) {
+                                const newFileName = input.files[0].name;
+                                const newImagePreview = `<p>New Image: ${newFileName}</p><img src="images/${newFileName}" width="40px" height="40px" title="${newFileName}">`;
+                                imageDetails.innerHTML = newImagePreview;
+                            } else if (!{{ product_image }}) {
+                            imageDetails.innerHTML = '';
+                        }
+                        }
+                        
+
+                    </script>
+
+                    <input type="hidden" name="product_image_previous" value="{{product_image}}" />
+                    <input class="submit" type="submit" value="Update" />
+                </form>
+                {{/each}}
+                    {{/if}}
+                    
+
+            </div>
+
+        </body>
+
+</html>

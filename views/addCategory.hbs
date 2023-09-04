@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+     <title>Category CRUD</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<header>
+    <div id="wrapper">
+        <div id="header" style="background-color: tomato">
+            <h1>Categories</h1>
+        </div>
+        <div id="menu">
+            <ul>
+                <li>
+                    <a href="/categoryindex">Categories List</a>
+                </li>
+                <li>
+                    <a href="addCategory">Add Categories</a>
+                </li>
+                <li>
+                    <a href="productindex">Products</a>
+                </li>
+                <li>
+                    <a href='logout'>Logout</a>
+                </li>
+                <!-- <li>
+                    <a href="update.php">Update</a>
+                </li>
+                <li>
+                    <a href="delete.php">Delete</a>
+                </li> -->
+            </ul>
+        </div>
+
+<body>
+    
+
+    <div id="main-content">
+        <h2>Add New Category</h2>
+        <div class="form-container">
+            <h3 style="text-align:center; color: red;">
+                {{error_message}}
+            </h3>
+            <form class="post-form" action="/addCategory" method="post">
+                <div class="form-group">
+                    <label>Category Name</label>
+
+                    <input type="text" name="cname" pattern="[A-Za-z\s]+" title="Please enter letters only" required />
+
+                </div>
+                <div class="form-group">
+                    <label>Parent Category</label>
+                    <select name="pname">
+                        <option value="" selected>Select Class</option>
+                        {{#each parentCategory}}
+                            <option value="{{cname}}">{{cname}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <input class="submit" type="submit" value="Save" />
+            </form>
+        </div>
+    </div>
+</body>
+</html>
