@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 
+
 const multer = require('multer')
 const app = express()
 const path=require('path')
@@ -24,6 +25,8 @@ router.get('/',userController.loginForm);
 router.post('/login',userController.login);
 router.get('/signuppage',userController.signupForm);
 router.post('/signup',userController.signup);
+router.get('/verify',userController.verify);
+router.post('/verify',userController.verify);
 router.get('/logout',userController.logout);
 router.get('/categoryindex', userController.view);
 router.get('/addCategory', userController.addCategoryForm);
@@ -37,6 +40,7 @@ router.post('/addproduct',upload.single('product_image'),userController.addProdu
 router.get('/editproduct',userController.editProductForm);
 router.post('/editproduct',upload.single('product_image'),userController.editProduct);
 router.get('/deleteproduct',userController.deleteProduct);
+router.post('/deletemultipleproduct',userController.deleteMultiple)
 
 router.get('*',userController.error);
 

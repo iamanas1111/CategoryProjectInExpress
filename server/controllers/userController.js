@@ -1,4 +1,46 @@
 const mysql = require('mysql');
+const nodemailer = require('nodemailer');
+
+
+const transporter = nodemailer.createTransport({
+    host: 'smtp.ethereal.email',
+    port: 587,
+    secure: false,
+    auth: {
+        user: 'weldon.kemmer74@ethereal.email',
+        pass: 'pTcYTCeGuSbzqGRyaV'
+    }
+})
+
+function sendOTPByEmail(email, otp) {
+    const mailOptions = {
+        from: 'weldon.kemmer74@ethereal.email',
+        to: email,
+        subject: 'OTP Verification',
+        text: `Your OTP for verification is: ${otp}`
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Error sending email:', error);
+        } else {
+            console.log('Email sent:', info.response);
+        }
+    });
+}
+
+
+function generateOTP() {
+    const length = 6; 
+    const characters = '0123456789';
+    let OTP = '';
+
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        OTP += characters.charAt(randomIndex);
+    }
+
+    return OTP;
+}
 
 const db = mysql.createPool({
     connectionLimit: 10,
@@ -74,25 +116,58 @@ exports.signup = (req, res) => {
                 return res.redirect(`/signup?error=${encodeURIComponent('Username already exists. Please choose a different Username.')}`);
             }
 
+            const generatedOTP = generateOTP(); 
+
+            // Send OTP via email
+            sendOTPByEmail(user_name, generatedOTP); 
+
+            req.session.generatedOTP = generatedOTP;
+
             // Insert the new user into the database
-            const insertQuery = `INSERT INTO users (name, user_name, password) VALUES (?, ?, ?)`;
-            db.query(insertQuery, [name, user_name, password], (err, result) => {
+            const insertQuery = `INSERT INTO users (name, user_name, password,otp) VALUES (?, ?, ?,?)`;
+            db.query(insertQuery, [name, user_name, password,generatedOTP], (err, result) => {
                 if (err) {
                     console.error(err);
                     return res.status(500).send('Internal Server Error');
                 }
 
-                // Store session data and redirect to the main page
                 req.session.user_name = user_name;
                 req.session.user_id = result.insertId; // Assuming your primary key column is named 'id'
                 req.session.name = name;
 
-                res.redirect('/categoryindex'); // Update the actual route
+                res.render('verify', { user_name, generatedOTP });
             });
         });
     }
 };
 
+exports.verify = (req, res) => {
+    // Get the user_name and pre-generated OTP from the session
+    const user_name = req.session.user_name;
+    const preGeneratedOTP = req.session.generatedOTP;
+    const checkQuery=`SELECT * FROM users WHERE user_name = ?`;
+    db.query(checkQuery,[user_name],(error,row)=>{
+        if (error) {
+            console.error(error);
+            return res.send('Database error');
+        }
+
+        if (row.length > 0) {
+            const user = row[0];
+            console.log(user);
+
+            if (user.otp == preGeneratedOTP) {
+    
+                return res.redirect("/categoryindex");
+            } else {
+                return res.send('Incorrect Otp');
+            }
+        } else {
+            return res.send('Incorrect Email Address');
+        }
+        
+    })
+};
 
 
 
@@ -609,6 +684,32 @@ exports.deleteProduct = (req, res) => {
     }
 };
 
+exports.deleteMultiple = async (req, res) => {
+    if(req.session.user_id){
+        res.render('unauthorisedUser')
+    }
+    const { selected } = req.body;
+  
+    if (!selected || !Array.isArray(selected) || selected.length === 0) {
+      return res.status(400).send('Invalid selection');
+    }
+  
+    try {
+    
+      for (const id of selected) {
+        await db.query('DELETE FROM product_manager WHERE prod_id = ?', [id]);
+      
+      }
+  
+      res.redirect('/productindex'); // Redirect back to your original page
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+    }
+    
+};
+
 exports.error = (req, res) => {
     res.render('error')
 }
+
