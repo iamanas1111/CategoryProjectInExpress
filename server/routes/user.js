@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-
+const csrf =require('csurf');
+const csrfProtection = csrf({cookie:true})
 
 const multer = require('multer')
 const app = express()
@@ -21,8 +22,8 @@ const storage = multer.diskStorage({
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 const upload = multer({ storage: storage });
 // Routes
-router.get('/',userController.loginForm);
-router.post('/login',userController.login);
+router.get('/',csrfProtection,userController.loginForm);
+router.post('/login',csrfProtection,userController.login);
 router.get('/signuppage',userController.signupForm);
 router.post('/signup',userController.signup);
 router.get('/verify',userController.verify);

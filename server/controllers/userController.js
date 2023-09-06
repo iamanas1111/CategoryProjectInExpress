@@ -51,10 +51,13 @@ const db = mysql.createPool({
 });
 
 exports.loginForm = (req, res, next) => {
-    res.render('loginpage', { title: 'Express', session: req.session });
+    console.log('Token to Browser/form: ' + req.csrfToken());
+    res.render('loginpage', { title: 'Express', session: req.session ,csrfToken:req.csrfToken});
 };
 
 exports.login = (req, res, next) => {
+        console.log('Token from Browser/form: ' + req.body._csrf)
+
     const user_name = req.body.user_name;
     const password = req.body.password;
 

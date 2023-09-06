@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const logger = require('morgan');
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser');
@@ -15,7 +14,6 @@ app.use('/css', express.static(path.join(__dirname, 'css')));
 app.set('views', path.join(__dirname, 'views'));
 
 // Middleware setup
-app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -31,19 +29,21 @@ app.use(session({
 // Routes
 app.use('/', routes);
 
-// Catch 404 and forward to error handler
-app.use((req, res, next) => {
-    next(createError(404));
-});
+// // Catch 404 and forward to error handler
+// app.use((req, res, next) => {
+//     next(createError(404));
+// });
 
-// Error handler
-app.use((err, req, res, next) => {
-    res.status(err.status || 500);
-    res.render('error', {
-        message: err.message,
-        error: req.app.get('env') === 'development' ? err : {}
-    });
-});
+// // Error handler
+// app.use((err, req, res, next) => {
+//     res.status(err.status || 500);
+//     res.render('error', {
+//         message: err.message,
+//         error: req.app.get('env') === 'development' ? err : {}
+//     });
+// });
+
+
 
 // Start the server
 const port = process.env.PORT || 4000;
