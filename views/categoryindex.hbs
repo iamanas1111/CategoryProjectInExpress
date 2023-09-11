@@ -8,6 +8,20 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Category CRUD</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .user-info {
+            display: flex;
+            align-items: center;
+            /* Vertically center the content */
+        }
+
+        .user-image {
+            max-width: 100px;
+            /* Adjust the max width as needed */
+            margin-left: 20px;
+            /* Add spacing between the text and image */
+        }
+    </style>
 </head>
 <header>
     <div id="wrapper">
@@ -40,9 +54,18 @@
         <body>
             <div id="main-content">
                 <h2>All Records</h2>
-                <h2>Welcome! {{user_namee}}</h2>
+                <h2>{{message}}</h2>
+                <div class="user-info">
+                    <div class="user-details">
+                        <h2>Welcome! {{user_namee}}</h2>
+                        <h2>{{userEmail}}</h2>
+                    </div>
+                    <img src="{{userProfile}}" style="height: 50px; width:50px;border-radius: 50%; object-fit: cover;" alt="" class="user-image">
+                </div>
+
 
                 <form class="col" method="GET">
+                    <input type="hidden" name="_csrf" value="{{csrfToken}}">
                     <input type="text" name="search" onkeyup="search" placeholder="Search by Category Name">
                     <input type="submit" value="Search" style="background-color:greenyellow">
                 </form>
@@ -62,7 +85,7 @@
                             <td>{{pname}}</td>
                             <td>{{cc}}</td>
                             <td>
-                                <a href='editCategory?id={{id}}&pname={{pname}}'>Edit</a> 
+                                <a href='editCategory?id={{id}}&pname={{pname}}'>Edit</a>
                                 <a href='delete?id={{id}}' onclick='return checkdelete()'>Delete</a>
                             </td>
                         </tr>

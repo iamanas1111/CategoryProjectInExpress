@@ -23,6 +23,7 @@
                         <form method="post" action="/signup">
                             <div class="mb-3">
                                 <label>Name</label>
+                                <input type="hidden" name="_csrf" value="{{csrfToken}}">
                                 <input type="text" name="name" class="form-control" required />
                             </div>
                             <div class="mb-3">

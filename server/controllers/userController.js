@@ -1,5 +1,7 @@
 const mysql = require('mysql');
 const nodemailer = require('nodemailer');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 
 const transporter = nodemailer.createTransport({
@@ -30,7 +32,7 @@ function sendOTPByEmail(email, otp) {
 
 
 function generateOTP() {
-    const length = 6; 
+    const length = 6;
     const characters = '0123456789';
     let OTP = '';
 
@@ -51,35 +53,39 @@ const db = mysql.createPool({
 });
 
 exports.loginForm = (req, res, next) => {
-    console.log('Token to Browser/form: ' + req.csrfToken());
-    res.render('loginpage', { title: 'Express', session: req.session ,csrfToken:req.csrfToken});
+    console.log('Token to LoginForm/form: ' + req.csrfToken());
+    res.render('loginpage', { title: 'Express', session: req.session, csrfToken: req.csrfToken });
 };
 
-exports.login = (req, res, next) => {
-        console.log('Token from Browser/form: ' + req.body._csrf)
+exports.login = async (req, res, next) => {
+    console.log('Token from LoginForm/form: ' + req.body._csrf)
 
     const user_name = req.body.user_name;
     const password = req.body.password;
 
     // Replace this query with your actual query to fetch user data
     const query = `
-        SELECT * FROM users
-        WHERE user_name = "${user_name}"
-    `;
+    SELECT * FROM users
+    WHERE user_name = ?
+  `;
 
-    db.query(query, (error, data) => {
+    db.query(query, [user_name], async (error, results) => {
         if (error) {
-            console.error(error);
-            return res.send('Database error');
+            console.error('Database error:', error);
+            return res.status(500).send('Database error');
         }
 
-        if (data.length > 0) {
-            const user = data[0];
+        if (results.length > 0) {
+            const user = results[0];
 
-            if (user.password === password) {
+            // Compare the entered password with the hashed password in the database
+            const passwordMatch = await bcrypt.compare(password, user.password);
+
+            if (passwordMatch) {
+                // Set session variables
                 req.session.user_id = user.id;
                 req.session.user_name = user.user_name;
-                return res.redirect("/categoryindex");
+                return res.redirect('/categoryindex');
             } else {
                 return res.send('Incorrect Password');
             }
@@ -98,18 +104,21 @@ exports.logout = (request, response, next) => {
 };
 
 exports.signupForm = (req, res) => {
-    res.render('signuppage');
+    console.log('Token to SignUp/form: ' + req.csrfToken());
+    res.render('signuppage', { csrfToken: req.csrfToken });
 }
+const SECRET_KEY = "NOTESAPI";
 
-exports.signup = (req, res) => {
+exports.signup = async (req, res) => {
     const { name, user_name, password, confirm_password } = req.body;
+    console.log('Token from Signup/form: ' + req.body._csrf)
 
     if (password !== confirm_password) {
         return res.status(422).json({ message: "Passwords do not match" });
     } else {
         // Check if the username already exists
         const checkQuery = `SELECT user_name FROM users WHERE user_name = ?`;
-        db.query(checkQuery, [user_name], (err, checkResult) => {
+        db.query(checkQuery, [user_name], async (err, checkResult) => {
             if (err) {
                 console.error(err);
                 return res.status(500).send('Internal Server Error');
@@ -119,16 +128,16 @@ exports.signup = (req, res) => {
                 return res.redirect(`/signup?error=${encodeURIComponent('Username already exists. Please choose a different Username.')}`);
             }
 
-            const generatedOTP = generateOTP(); 
+            const generatedOTP = generateOTP();
 
             // Send OTP via email
-            sendOTPByEmail(user_name, generatedOTP); 
-
+            sendOTPByEmail(user_name, generatedOTP);
             req.session.generatedOTP = generatedOTP;
+            const hashedPassword = await bcrypt.hash(password, 10);
 
             // Insert the new user into the database
             const insertQuery = `INSERT INTO users (name, user_name, password,otp) VALUES (?, ?, ?,?)`;
-            db.query(insertQuery, [name, user_name, password,generatedOTP], (err, result) => {
+            db.query(insertQuery, [name, user_name, hashedPassword, generatedOTP], (err, result) => {
                 if (err) {
                     console.error(err);
                     return res.status(500).send('Internal Server Error');
@@ -138,48 +147,74 @@ exports.signup = (req, res) => {
                 req.session.user_id = result.insertId; // Assuming your primary key column is named 'id'
                 req.session.name = name;
 
-                res.render('verify', { user_name, generatedOTP });
+                const token = jwt.sign({ user_name: user_name }, SECRET_KEY, { expiresIn: '1m' });
+
+                res.cookie('token', token, { httpOnly: true });
+                // res.status(201).json({ message: 'User registered successfully', token });
+
+                res.render('verify', { user_name, generatedOTP, csrfToken: req.csrfToken });
             });
         });
     }
 };
 
 exports.verify = (req, res) => {
-    // Get the user_name and pre-generated OTP from the session
     const user_name = req.session.user_name;
     const preGeneratedOTP = req.session.generatedOTP;
-    const checkQuery=`SELECT * FROM users WHERE user_name = ?`;
-    db.query(checkQuery,[user_name],(error,row)=>{
-        if (error) {
-            console.error(error);
-            return res.send('Database error');
+    const token = req.cookies.token;
+
+    if (!token) {
+        return res.status(401).send('Unauthorized');
+    }
+
+    // Verify  JWT token
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) {
+            return res.status(401).send('Unauthorized');
         }
 
-        if (row.length > 0) {
-            const user = row[0];
-            console.log(user);
+        const decodedUsername = decoded.user_name;
 
-            if (user.otp == preGeneratedOTP) {
-    
-                return res.redirect("/categoryindex");
-            } else {
-                return res.send('Incorrect Otp');
+        if (decodedUsername !== user_name) {
+            return res.status(401).send('Unauthorized');
+        }
+
+        //  OTP verification 
+        const checkQuery = `SELECT * FROM users WHERE user_name = ?`;
+        db.query(checkQuery, [user_name], (error, rows) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).send('Database error');
             }
-        } else {
-            return res.send('Incorrect Email Address');
-        }
-        
-    })
+
+            if (rows.length > 0) {
+                const user = rows[0];
+
+                if (user.otp == preGeneratedOTP) {
+                    const message = 'User registered successfully';
+                    res.render('categoryindex', { message });
+                } else {
+                    return res.status(401).send('Incorrect OTP');
+                }
+            } else {
+                return res.status(401).send('User not found');
+            }
+        });
+    });
 };
 
 
-
 exports.view = (req, res) => {
-    if (req.session.user_id) {
-        const user_id = req.session.user_id;
-        const user_namee = req.session.user_name;
-        console.log(req.session);
+    if (req.session) {
+        const user_id = req.session.user_id || req.session.passport.user.id || 'DefaultId';;
+        const user_namee = req.session.user_name || req.session.passport.user.displayName || 'DefaultUsername';
+        const csrfToken = req.csrfToken();
+
+        console.log(user_namee);
         console.log(user_id);
+        console.log(req.session.passport);
+        const userProfile = req.session.passport?.user?.photos[0]?.value || 'DefaultPhoto';
+        const userEmail =  req.session.passport?.user?.emails[0]?.value ||'undefined' || 'DefaultEmail';
         db.getConnection((err, connection) => {
             if (err) {
                 console.error(err);
@@ -204,7 +239,7 @@ exports.view = (req, res) => {
                 connection.release();
                 if (!err) {
 
-                    res.render('categoryindex.hbs', { category: rows, searchQuery: searchQuery, user_namee });
+                    res.render('categoryindex.hbs', { category: rows, searchQuery: searchQuery, user_namee, csrfToken, userProfile, userEmail });
                 } else {
                     console.log(err);
                 }
@@ -688,28 +723,28 @@ exports.deleteProduct = (req, res) => {
 };
 
 exports.deleteMultiple = async (req, res) => {
-    if(req.session.user_id){
+    if (req.session.user_id) {
         res.render('unauthorisedUser')
     }
     const { selected } = req.body;
-  
+
     if (!selected || !Array.isArray(selected) || selected.length === 0) {
-      return res.status(400).send('Invalid selection');
+        return res.status(400).send('Invalid selection');
     }
-  
+
     try {
-    
-      for (const id of selected) {
-        await db.query('DELETE FROM product_manager WHERE prod_id = ?', [id]);
-      
-      }
-  
-      res.redirect('/productindex'); // Redirect back to your original page
+
+        for (const id of selected) {
+            await db.query('DELETE FROM product_manager WHERE prod_id = ?', [id]);
+
+        }
+
+        res.redirect('/productindex'); // Redirect back to your original page
     } catch (error) {
-      console.error(error);
-      res.status(500).send('Internal Server Error');
+        console.error(error);
+        res.status(500).send('Internal Server Error');
     }
-    
+
 };
 
 exports.error = (req, res) => {
