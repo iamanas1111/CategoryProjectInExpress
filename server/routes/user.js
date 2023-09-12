@@ -19,11 +19,11 @@ const storage = multer.diskStorage({
     }
 })
 
-
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 const upload = multer({ storage: storage });
 
 // Routes
+
 router.get(
     "/auth/google",
     passport.authenticate("google", { scope: ["profile", "email"] })
@@ -33,8 +33,9 @@ router.get(
     "/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/" }),
     function (req, res) {
-        res.redirect('/categoryindex');
-
+        if (req.isAuthenticated()) {
+            res.redirect('/categoryindex');
+        } 
     }
 );
 
@@ -58,11 +59,5 @@ router.get('/editproduct', userController.editProductForm);
 router.post('/editproduct', upload.single('product_image'), userController.editProduct);
 router.get('/deleteproduct', userController.deleteProduct);
 router.post('/deletemultipleproduct', userController.deleteMultiple)
-
 router.get('*', userController.error);
-
-
-
-
-
 module.exports = router;

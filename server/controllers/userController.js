@@ -2,6 +2,7 @@ const mysql = require('mysql');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+// const axios = require("axios"); // Import Axios or your preferred HTTP library
 
 
 const transporter = nodemailer.createTransport({
@@ -95,13 +96,47 @@ exports.login = async (req, res, next) => {
     });
 };
 
+
 exports.logout = (request, response, next) => {
+    // if (request.session.passport && request.session.passport.user && request.session.passport.user?.password) {
+    //     const access_token = request.session.passport.user.password;
+    //     const revokeUrl = `https://accounts.google.com/o/oauth2/revoke?token=${access_token}`;
 
-    request.session.destroy();
-
-    response.redirect("/");
-
+    //     // Send a POST request to revoke the access token
+    //     axios.post(revokeUrl)
+    //         .then(() => {
+    //             // Access token revoked, destroy the session
+    //             request.session.destroy((err) => {
+    //                 if (err) {
+    //                     // console.error(err);
+    //                 }
+    //                 // Redirect the user to the home page or a suitable URL after logout
+    //                 response.redirect("/");
+    //             });
+    //         })
+    //         .catch((error) => {
+    //             console.error("Error revoking access token:", error);
+    //             // Even if there's an error, still destroy the session and log the user out
+    //             request.session.destroy((err) => {
+    //                 if (err) {
+    //                     // console.error(err);
+    //                 }
+    //                 // Redirect the user to the home page or a suitable URL after logout
+    //                 response.redirect("/");
+    //             });
+    //         });
+    // } else if (request.session.user_id) {
+        // No access token or user session, just destroy the session and redirect
+        request.session.destroy((err) => {
+            if (err) {
+                // console.error(err);
+            }
+            response.redirect("/");
+        });
+    // }
 };
+
+
 
 exports.signupForm = (req, res) => {
     console.log('Token to SignUp/form: ' + req.csrfToken());
@@ -205,16 +240,15 @@ exports.verify = (req, res) => {
 
 
 exports.view = (req, res) => {
-    if (req.session) {
-        const user_id = req.session.user_id || req.session.passport.user.id || 'DefaultId';;
-        const user_namee = req.session.user_name || req.session.passport.user.displayName || 'DefaultUsername';
+    if (req.session.user_id || req.session.passport?.user?.id) {
+        const user_id = req.session.user_id || req.session.passport?.user?.id || 'DefaultId';;
+        const user_namee = req.session.user_name || req.session.passport.user.name || 'DefaultUsername';
         const csrfToken = req.csrfToken();
 
         console.log(user_namee);
         console.log(user_id);
-        console.log(req.session.passport);
-        const userProfile = req.session.passport?.user?.photos[0]?.value || 'DefaultPhoto';
-        const userEmail =  req.session.passport?.user?.emails[0]?.value ||'undefined' || 'DefaultEmail';
+        const userProfile = req.session.passport?.user?.photo || 'DefaultPhoto';
+        const userEmail = req.session.passport?.user?.user_name || 'undefined' || 'DefaultEmail';
         db.getConnection((err, connection) => {
             if (err) {
                 console.error(err);
@@ -228,13 +262,14 @@ exports.view = (req, res) => {
             JOIN category_manager AS b ON b.id = a.pid
             LEFT JOIN (
                 SELECT c_id, user_id, COUNT(*) AS cc FROM product_manager GROUP BY c_id, user_id
-            ) AS subquery ON subquery.c_id = a.id AND subquery.user_id = ?
-            WHERE (a.cname LIKE ? OR EXISTS (
-                SELECT 1 FROM category_manager AS b WHERE b.id = a.pid AND b.cname LIKE ?
+            ) AS subquery ON subquery.c_id = a.id AND subquery.user_id = "${user_id}"
+            WHERE (a.cname LIKE "%${searchQuery}%" OR EXISTS (
+                SELECT 1 FROM category_manager AS b WHERE b.id = a.pid AND b.cname LIKE "%${searchQuery}%"
             ))
-            AND a.user_id = ?;
+            AND a.user_id = "${user_id}";
         
         `;
+            // console.log(sql);
             db.query(sql, [user_id, `%${searchQuery}%`, `%${searchQuery}%`, user_id], (err, rows) => {
                 connection.release();
                 if (!err) {
@@ -254,8 +289,9 @@ exports.view = (req, res) => {
 
 
 exports.addCategoryForm = (req, res) => {
-    if (req.session.user_id) {
-        const user_id = req.session.user_id;
+    if (req.session.user_id || req.session.passport?.user?.id) {
+        const user_id = req.session.user_id || req.session.passport?.user?.id;
+        console.log(user_id);
 
         db.getConnection((err, connection) => {
             if (err) {
@@ -282,8 +318,8 @@ exports.addCategoryForm = (req, res) => {
 
 
 exports.addCategory = (req, res) => {
-    if (req.session.user_id) {
-        const user_id = req.session.user_id;
+    if (req.session.user_id || req.session.passport?.user?.id) {
+        const user_id = req.session.user_id || req.session.passport?.user?.id;
 
         const { cname, pname } = req.body;
         const checkQuery = `SELECT cname FROM category_manager WHERE cname = ? AND user_id=?`;
@@ -340,7 +376,7 @@ exports.addCategory = (req, res) => {
 
 
 exports.editCategoryForm = (req, res) => {
-    if (req.session.user_id) {
+    if (req.session.user_id || req.session.passport?.user?.id) {
 
         const id = req.query.id;
         const pname = req.query.pname;
@@ -392,14 +428,16 @@ exports.editCategoryForm = (req, res) => {
 };
 
 exports.editCategory = (req, res) => {
-    if (req.session.user_id) {
+    if (req.session.user_id || req.session.passport?.user?.id) {
         const id = req.body.id;
+        const user_id = req.session.user_id || req.session.passport?.user?.id;
+
         const { cname, pname, original_cname } = req.body; // Add original_cname to your form
 
         if (cname !== original_cname) {
-            const checkQuery = `SELECT cname FROM category_manager WHERE cname=?`;
+            const checkQuery = `SELECT cname FROM category_manager WHERE cname=? AND user_id=?`;
 
-            db.query(checkQuery, [cname], (error, checkResult) => {
+            db.query(checkQuery, [cname, user_id], (error, checkResult) => {
                 if (error) {
                     console.log(error);
                     return res.status(500).send("Database Error");
@@ -449,7 +487,7 @@ exports.editCategory = (req, res) => {
 
 
 exports.deleteCategory = (req, res) => {
-    if (req.session.user_id) {
+    if (req.session.user_id || req.session.passport?.user?.id) {
 
         const categoryId = req.query.id;
 
@@ -476,8 +514,8 @@ exports.deleteCategory = (req, res) => {
 };
 
 exports.productindex = (req, res) => {
-    if (req.session.user_id) {
-        const user_id = req.session.user_id;
+    if (req.session.user_id || req.session.passport?.user?.id) {
+        const user_id = req.session.user_id || req.session.passport?.user?.id;
 
         const searchQuery = req.query.search || ''; // Get the search query from the request
 
@@ -506,8 +544,8 @@ exports.productindex = (req, res) => {
 };
 
 exports.addProductForm = (req, res) => {
-    if (req.session.user_id) {
-        const user_id = req.session.user_id;
+    if (req.session.user_id || req.session.passport?.user?.id) {
+        const user_id = req.session.user_id || req.session.passport?.user?.id;
 
         db.getConnection((err, connection) => {
             if (err) {
@@ -534,8 +572,8 @@ exports.addProductForm = (req, res) => {
 
 
 exports.addProduct = (req, res) => {
-    if (req.session.user_id) {
-        const user_id = req.session.user_id;
+    if (req.session.user_id || req.session.passport?.user?.id) {
+        const user_id = req.session.user_id || req.session.passport?.user?.id;
         const {
             produnct_name,
             price,
@@ -586,7 +624,8 @@ exports.addProduct = (req, res) => {
 };
 
 exports.editProductForm = (req, res) => {
-    if (req.session.user_id) {
+    if (req.session.user_id || req.session.passport?.user?.id) {
+        const user_id = req.session.user_id || req.session.passport?.user?.id;
 
         const id = req.query.param1;
         const pname = req.query.param2;
@@ -607,8 +646,8 @@ exports.editProductForm = (req, res) => {
                 }
 
                 // Fetch all parent categories
-                const getAllParentCategory = `SELECT distinct cname,pid,id FROM category.category_manager where pid>0 ;`
-                db.query(getAllParentCategory, (parentErr, parentCategoryResult) => {
+                const getAllParentCategory = `SELECT distinct cname,pid,id FROM categoryexpress.category_manager where pid>0 AND user_id=?;`
+                db.query(getAllParentCategory, [user_id], (parentErr, parentCategoryResult) => {
                     if (parentErr) {
                         console.error(parentErr);
                         return res.status(500).send("Query Unsuccessful");
@@ -639,8 +678,9 @@ exports.editProductForm = (req, res) => {
 };
 
 exports.editProduct = (req, res) => {
-    if (req.session.user_id) {
+    if (req.session.user_id || req.session.passport?.user?.id) {
 
+        const user_id = req.session.user_id || req.session.passport?.user?.id;
 
         const prod_id = req.body.prod_id;
         const produnct_name = req.body.produnct_name;
@@ -653,8 +693,8 @@ exports.editProduct = (req, res) => {
         const newImageName = req.file ? req.file.filename : product_image_previous;
 
         // Fetch category ID
-        const getCidQuery = `SELECT id FROM category_manager WHERE cname = ?`;
-        db.query(getCidQuery, [pname], (err, results) => {
+        const getCidQuery = `SELECT id FROM category_manager WHERE cname = ? AND user_id=?`;
+        db.query(getCidQuery, [pname, user_id], (err, results) => {
             if (err) {
                 console.error('Error fetching category ID:', err);
                 return res.status(500).send('Query Unsuccessful');
@@ -689,7 +729,7 @@ exports.editProduct = (req, res) => {
 };
 
 exports.deleteProduct = (req, res) => {
-    if (req.session.user_id) {
+    if (req.session.user_id || req.session.passport?.user?.id) {
 
         const id = req.query.id;
         const category = req.query.param2;
@@ -723,7 +763,7 @@ exports.deleteProduct = (req, res) => {
 };
 
 exports.deleteMultiple = async (req, res) => {
-    if (req.session.user_id) {
+    if (req.session.user_id || req.session.passport?.user?.id) {
         res.render('unauthorisedUser')
     }
     const { selected } = req.body;
