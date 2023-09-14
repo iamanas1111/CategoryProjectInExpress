@@ -7,7 +7,8 @@ const passport = require("passport");
 
 const multer = require('multer')
 const app = express()
-const path = require('path')
+const path = require('path');
+const { profile } = require('console');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -24,6 +25,7 @@ const upload = multer({ storage: storage });
 
 // Routes
 
+//Google
 router.get(
     "/auth/google",
     passport.authenticate("google", { scope: ["profile", "email"] })
@@ -33,6 +35,23 @@ router.get(
     "/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/" }),
     function (req, res) {
+        if (req.isAuthenticated()) {
+            res.redirect('/categoryindex');
+        } 
+    }
+);
+//Facebook
+router.get(
+    "/auth/facebook",
+    passport.authenticate("facebook", { scope: ["email"] })
+    
+);
+
+router.get(
+    "/auth/facebook/callback",
+    passport.authenticate("facebook", { failureRedirect: "/" }),
+    function (req, res) {
+        console.log(req.user);
         if (req.isAuthenticated()) {
             res.redirect('/categoryindex');
         } 
@@ -59,5 +78,6 @@ router.get('/editproduct', userController.editProductForm);
 router.post('/editproduct', upload.single('product_image'), userController.editProduct);
 router.get('/deleteproduct', userController.deleteProduct);
 router.post('/deletemultipleproduct', userController.deleteMultiple)
+router.get('/userprofile',userController.userProfile);
 router.get('*', userController.error);
 module.exports = router;

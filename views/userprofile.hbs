@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>All Records</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Category CRUD</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        #menu li {
+            margin-right: 20px;
+        }
+
+        .user-profile {
+            background-color: #fff;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .user-info img {
+            max-width: 100px;
+            height: auto;
+            border-radius: 50%;
+            margin-right: 20px;
+        }
+
+        .user-info h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .user-info p {
+            margin: 0;
+            font-size: 16px;
+            color: #777;
+        }
+
+        #edit-profile-button {
+            background-color: tomato;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #edit-profile-form {
+            display: none;
+        }
+
+        #edit-profile-form h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        #edit-profile-form label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        #edit-profile-form input[type="text"],
+        #edit-profile-form input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #edit-profile-form button {
+            background-color: tomato;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            background-color: tomato;
+            color: white;
+        }
+    </style>
+</head>
+<header>
+    <div id="wrapper">
+        <div id="header" style="background-color: tomato">
+            <h1>User Profile</h1>
+        </div>
+        <div id="menu">
+            <ul>
+                <li>
+                    <a href="/categoryindex">Home</a>
+                </li>
+                
+            </ul>
+        </div>
+
+        <body>
+    
+
+    <main>
+        <section class="user-profile">
+            <div class="user-info">
+                <!-- User's profile image -->
+                <img id="profile-image-preview" src="{{userProfile}}" alt="User Profile Image">
+                <h2>{{name}}</h2>
+                <p style="margin-left: 10px;">{{user_namee}}</p>
+                <button id="edit-profile-button" style="margin-left: 20px;">Edit Profile</button>
+            </div>
+
+            <!-- Edit Profile form (initially hidden) -->
+            <form id="edit-profile-form" style="display: none;">
+                <h2>Edit Profile</h2>
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" value="{{name}}" required>
+                
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="{{user_namee}}" required>
+                
+                <label for="profile-image">Profile Image:</label>
+                <input type="file" id="profile-image" name="profile-image" accept="image/*">
+                <img id="new-image-preview" src="" alt="New Profile Image" style="display: none; max-width: 100px; margin-top: 10px;">
+
+                <button type="submit">Save</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Category Management</p>
+    </footer>
+
+    <script>
+        const editProfileButton = document.getElementById('edit-profile-button');
+        const editProfileForm = document.getElementById('edit-profile-form');
+        const profileImagePreview = document.getElementById('profile-image-preview');
+        const newImagePreview = document.getElementById('new-image-preview');
+        const profileImageInput = document.getElementById('profile-image');
+
+        editProfileButton.addEventListener('click', () => {
+            if (editProfileForm.style.display === 'none') {
+                editProfileForm.style.display = 'block';
+                // Display the current profile image
+                profileImagePreview.style.display = 'block';
+                newImagePreview.style.display = 'none'; // Hide the new image preview
+            } else {
+                editProfileForm.style.display = 'none';
+            }
+        });
+
+        // Listen for changes in the profile image input
+        profileImageInput.addEventListener('input', () => {
+            const file = profileImageInput.files[0];
+            if (file) {
+                // Display the new image preview
+                newImagePreview.style.display = 'block';
+                newImagePreview.src = URL.createObjectURL(file);
+                // Hide the current profile image
+                profileImagePreview.style.display = 'none';
+            } else {
+                // No file selected, show the current profile image
+                newImagePreview.style.display = 'none';
+                profileImagePreview.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

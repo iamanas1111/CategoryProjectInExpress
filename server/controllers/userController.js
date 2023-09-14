@@ -86,6 +86,8 @@ exports.login = async (req, res, next) => {
                 // Set session variables
                 req.session.user_id = user.id;
                 req.session.user_name = user.user_name;
+                req.session.name = user.name;
+
                 return res.redirect('/categoryindex');
             } else {
                 return res.send('Incorrect Password');
@@ -242,13 +244,14 @@ exports.verify = (req, res) => {
 exports.view = (req, res) => {
     if (req.session.user_id || req.session.passport?.user?.id) {
         const user_id = req.session.user_id || req.session.passport?.user?.id || 'DefaultId';;
-        const user_namee = req.session.user_name || req.session.passport.user.name || 'DefaultUsername';
+        const user_namee = req.session.user_name || req.session.passport?.user?.user_name || 'DefaultUsername';
         const csrfToken = req.csrfToken();
 
         console.log(user_namee);
         console.log(user_id);
         const userProfile = req.session.passport?.user?.photo || 'DefaultPhoto';
-        const userEmail = req.session.passport?.user?.user_name || 'undefined' || 'DefaultEmail';
+        const name = req.session.name || req.session.passport?.user?.name  || 'DefaultName';
+        console.log(name);
         db.getConnection((err, connection) => {
             if (err) {
                 console.error(err);
@@ -274,7 +277,7 @@ exports.view = (req, res) => {
                 connection.release();
                 if (!err) {
 
-                    res.render('categoryindex.hbs', { category: rows, searchQuery: searchQuery, user_namee, csrfToken, userProfile, userEmail });
+                    res.render('categoryindex.hbs', { category: rows, searchQuery: searchQuery, user_namee, csrfToken, userProfile, name });
                 } else {
                     console.log(err);
                 }
@@ -786,6 +789,20 @@ exports.deleteMultiple = async (req, res) => {
     }
 
 };
+
+exports.userProfile = (req,res)=>{
+    if(req.session.user_id || req.session.passport?.user?.id){
+
+        const user_namee = req.session.user_name || req.session.passport.user.user_name || 'DefaultUsername';
+        const userProfile = req.session.passport?.user?.photo || 'DefaultPhoto';
+        const name = req.session.name || req.session.passport?.user?.name || 'undefined' || 'DefaultEmail';
+
+        res.render('userprofile',{user_namee,name,userProfile})
+
+    }else{
+        res.render('unauthorisedUser')
+    }
+}
 
 exports.error = (req, res) => {
     res.render('error')

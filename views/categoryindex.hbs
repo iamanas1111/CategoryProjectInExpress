@@ -42,6 +42,15 @@
                 <li>
                     <a href='logout'>Logout</a>
                 </li>
+                
+                <li>
+                    <div class="user-info">
+                     <div class="user-details">
+                    <a>{{user_namee}}</a>
+                    </div>
+                    <a href="userprofile"><img src="{{userProfile}}" style="height: 25px; width:25px;border-radius: 50%; object-fit: cover; " alt="" class="user-image"></a>
+                    </div>
+                </li>
                 <!-- <li>
                     <a href="update.php">Update</a>
                 </li>
@@ -55,13 +64,13 @@
             <div id="main-content">
                 <h2>All Records</h2>
                 <h2>{{message}}</h2>
-                <div class="user-info">
+                {{!-- <div class="user-info">
                     <div class="user-details">
                         <h2>Welcome! {{user_namee}}</h2>
                         <h2>{{userEmail}}</h2>
                     </div>
                     <img src="{{userProfile}}" style="height: 50px; width:50px;border-radius: 50%; object-fit: cover;" alt="" class="user-image">
-                </div>
+                </div> --}}
 
 
                 <form class="col" method="GET">
@@ -92,6 +101,7 @@
                         {{/each}}
                     </tbody>
                 </table>
+                
 
                 <script>
                     function checkdelete() {
