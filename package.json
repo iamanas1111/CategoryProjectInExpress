@@ -4,7 +4,8 @@
   "description": "This is an Express.js Project",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "build": "echo 'Build step completed'"
   },
   "dependencies": {
     "axios": "^1.5.0",
