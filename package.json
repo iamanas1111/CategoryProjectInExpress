@@ -1,6 +1,8 @@
 {
   "scripts": {
-  "start": "node app.js"
+    "start": "node app.js",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "4000": "^0.4.1",
@@ -30,5 +32,13 @@
     "passport-local": "^1.0.0",
     "path": "^0.12.7",
     "uuid": "^9.0.0"
-  }
+  },
+  "name": "CategoryProjectInExpress",
+  "description": "This is a Express.JS Project",
+  "version": "1.0.0",
+  "main": "app.js",
+  "devDependencies": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
