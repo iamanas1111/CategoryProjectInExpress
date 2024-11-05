@@ -33,7 +33,7 @@
     "path": "^0.12.7",
     "uuid": "^9.0.0"
   },
-  "name": "CategoryProjectInExpress",
+  "name": "category-project-in-express",
   "description": "This is a Express.JS Project",
   "version": "1.0.0",
   "main": "app.js",
